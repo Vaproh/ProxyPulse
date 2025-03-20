@@ -1,4 +1,4 @@
-# ⚡ Advanced Proxy Checker 🚀
+# ⚡ ProxyPulse 🚀
 
 A high-performance 🔥 proxy verification tool designed for efficiency ⚡, accuracy ✅, and ease of use 🎯. This tool provides detailed reporting 📊, colorized output 🎨, and support for multiple input formats 📂 to streamline proxy validation.
 
