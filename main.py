@@ -347,46 +347,42 @@ def sort_and_save_proxies(
     print(colored(f"Detailed report: {csv_report_path}", "CYAN"))
     print(colored(f"Summary stats: {summary_path}", "CYAN"))
 
+
 def load_proxies_from_folder(folder_path):
     """Load proxies from multiple files within a folder."""
     proxies = []
     for filename in os.listdir(folder_path):
         file_path = os.path.join(folder_path, filename)
-        if filename.endswith('.csv'):
+        if filename.endswith(".csv"):
             proxies.extend(load_proxies_from_csv(file_path))
-        elif filename.endswith('.json'):
+        elif filename.endswith(".json"):
             proxies.extend(load_proxies_from_json(file_path))
-        elif filename.endswith('.txt'):
+        elif filename.endswith(".txt"):
             proxies.extend(load_proxies_from_txt(file_path))
     return proxies
+
 
 def main():
     parser = argparse.ArgumentParser(
         description="Advanced Proxy Checker with Multi-File Support",
-        formatter_class=argparse.ArgumentDefaultsHelpFormatter
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
     parser.add_argument(
-        "--input", default="proxies",
-        help="Input file or directory containing proxy files"
+        "--input",
+        default="proxies",
+        help="Input file or directory containing proxy files",
     )
     parser.add_argument(
-        "--output", default="proxy_results",
-        help="Output directory for results"
+        "--output", default="proxy_results", help="Output directory for results"
     )
     parser.add_argument(
-        "--threads", type=int, default=20,
-        help="Maximum concurrent threads"
+        "--threads", type=int, default=20, help="Maximum concurrent threads"
     )
     parser.add_argument(
-        "--sort", choices=["latency", "speed"],
-        help="Sort working proxies by metric"
+        "--sort", choices=["latency", "speed"], help="Sort working proxies by metric"
     )
     parser.add_argument(
-        "--timeout", type=int, default=5,
-        help="Timeout for proxy checks in seconds"
-    )
-    parser.add_argument(
-        "--help", action="help", help="Show this help message and exit"
+        "--timeout", type=int, default=5, help="Timeout for proxy checks in seconds"
     )
 
     args = parser.parse_args()
@@ -395,11 +391,11 @@ def main():
     print(f"Loading proxies from {args.input}...")
 
     if os.path.isfile(args.input):
-        if args.input.endswith('.csv'):
+        if args.input.endswith(".csv"):
             proxies = load_proxies_from_csv(args.input)
-        elif args.input.endswith('.json'):
+        elif args.input.endswith(".json"):
             proxies = load_proxies_from_json(args.input)
-        elif args.input.endswith('.txt'):
+        elif args.input.endswith(".txt"):
             proxies = load_proxies_from_txt(args.input)
         else:
             print("Unsupported file format!")
@@ -424,6 +420,6 @@ def main():
     print(f"\nCompleted checks in {duration:.2f} seconds")
     sort_and_save_proxies(checked_proxies, args.output, args.sort, True)
 
+
 if __name__ == "__main__":
     main()
-
