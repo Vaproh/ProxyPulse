@@ -1,6 +1,6 @@
-# ⚡ Advanced Proxy Checker 🚀
+# ⚡ ProxyPulse 🚀
 
-A high-performance 🔥 proxy verification tool designed for efficiency ⚡, accuracy ✅, and ease of use 🎯. This tool provides detailed reporting 📊, colorized output 🎨, and support for multiple input formats 📂 to streamline proxy validation.
+ProxyPulse is a high-performance proxy verification tool 🚀. It supports CSV, JSON, and TXT input formats 📂, provides colorized console output 🎨, measures latency & speed ⏳⚡, detects proxy types 🔗, and includes geo-location analysis 🌍. With multi-threading 🧵 and detailed reporting 📊, it ensures fast and accurate proxy validation ✅.
 
 ## ✨ Key Features
 
