@@ -1,17 +1,17 @@
-# ⚡ ProxyPulse 🚀
+# ⚡ Advanced Proxy Checker 🚀
 
-ProxyPulse is a high-performance proxy verification tool 🚀. It supports CSV, JSON, and TXT input formats 📂, provides colorized console output 🎨, measures latency & speed ⏳⚡, detects proxy types 🔗, and includes geo-location analysis 🌍. With multi-threading 🧵 and detailed reporting 📊, it ensures fast and accurate proxy validation ✅.
+A high-performance 🔥 proxy verification tool designed for efficiency ⚡, accuracy ✅, and ease of use 🎯. This tool provides detailed reporting 📊, colorized output 🎨, and support for multiple input formats 📂 to streamline proxy validation.
 
 ## ✨ Key Features
 
-- 🗂 **Multi-Format Support**: Process proxy lists from 📄 CSV, 📝 JSON, and 📃 TXT files.
-- 📁 **Automated Directory Scanning**: Detect and process all proxy files within a folder 📂.
-- 🎨 **Colorized Console Output**: Provides real-time ⏳, visually distinct feedback 👀.
-- 🚀 **Performance Metrics**: Measures ⏱ latency and ⚡ connection speed.
-- 🌎 **Geo-Location Analysis**: Identifies the 🏳️ country of each proxy.
-- 📊 **Comprehensive Reporting**: Generates structured reports in 📄 CSV, 📃 TXT, and 📜 summary formats.
-- 🔍 **Proxy Type Identification**: Auto-detects 🔗 HTTP, 🔐 HTTPS, and 🧦 SOCKS proxies.
-- 🧵 **High-Concurrency Processing**: Supports multi-threading with 🔄 configurable concurrency (up to 100 threads ⚡).
+- 🗂 **Multi-Format Support**: Process proxy lists from CSV, JSON, and TXT files.
+- 📁 **Automated Directory Scanning**: Detect and process all proxy files within a folder.
+- 🎨 **Colorized Console Output**: Provides real-time, visually distinct feedback.
+- 🚀 **Performance Metrics**: Measures latency and connection speed.
+- 🌎 **Geo-Location Analysis**: Identifies the country of each proxy.
+- 📊 **Comprehensive Reporting**: Generates structured reports in CSV, TXT, and summary formats.
+- 🔍 **Proxy Type Identification**: Auto-detects HTTP, HTTPS, and SOCKS proxies.
+- 🧵 **High-Concurrency Processing**: Supports multi-threading with configurable concurrency (up to 100 threads).
 
 ## 📁 Supported Input Formats
 
@@ -66,26 +66,35 @@ python proxy_checker.py \
 ### 📜 Option Descriptions
 | 🏷 **Option**   | 📖 **Description** |
 |---------------|-------------|
-| `--input`     | 📂 Specifies the input file or directory containing proxies. |
-| `--output`    | 🗂 Defines the directory where the results will be stored. |
-| `--threads`   | ⚙️ Sets the number of concurrent threads for faster processing (default: 50). |
-| `--timeout`   | ⏳ Configures the timeout period (in seconds) for each proxy request. |
-| `--sort`      | 🔄 Sorts proxies by `latency` (fastest first ⏱) or `speed` (highest bandwidth first 🚀). |
+| `--input`     | Specifies the input file or directory containing proxies. |
+| `--output`    | Defines the directory where the results will be stored. |
+| `--threads`   | Sets the number of concurrent threads for faster processing (default: 50). |
+| `--timeout`   | Configures the timeout period (in seconds) for each proxy request. |
+| `--sort`      | Sorts proxies by `latency` (fastest first) or `speed` (highest bandwidth first). |
 
 ## 📂 Output Structure
 ```
 results/
 ├── 20231024_153045/
-│   ├── working_report.csv     # 📄 Complete proxy check results
-│   ├── summary.txt            # 📜 Overall check statistics
-│   ├── working_proxies.txt    # ✅ List of functional proxies
-│   ├── latency_sorted.txt     # ⏳ Proxies sorted by response time
-│   └── speed_sorted.txt       # 🚀 Proxies sorted by bandwidth capacity
+│   ├── working_report.csv     # Complete proxy check results
+│   ├── summary.txt            # Overall check statistics
+│   ├── working_proxies.txt    # List of functional proxies
+│   ├── latency_sorted.txt     # Proxies sorted by response time
+│   └── speed_sorted.txt       # Proxies sorted by bandwidth capacity
 ```
 
 ## 📋 System Requirements
 - 🐍 **Python 3.8+**
 - 📦 **`requests` library**
+
+## 📝 TODO List
+- 🖥 **Develop a GUI version** for user-friendly interaction.
+
+## 👨‍💻 Developed By
+Your Name (@vaproh)
+
+## 📜 License
+This project is licensed under the MIT License. See the `LICENSE` file for details.
 
 Boost your productivity with this ⚡ powerful, high-performance 🏎 proxy checking tool! 🎯
 
