@@ -1,0 +1,8 @@
+=== Proxy Check Summary ===
+Timestamp: 20250320_185154
+Total Tested: 1144
+Working Proxies: 146
+Failed Proxies: 998
+Success Rate: 12.76%
+Average Latency: 117.8211s
+Average Speed: 2613.17 B/s
