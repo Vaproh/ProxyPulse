@@ -39,11 +39,35 @@ def get_country(ip):
         return "Unknown"
 
 
-def check_proxy(proxy, results, timeout=5):
+def check_proxy(proxy, results, timeout=5, proxy_data=None):
     """Checks if a proxy is working and returns its metrics."""
     try:
         ip, port = proxy.split(":")
         start_time = time.time()
+
+        # Use existing data if available
+        if proxy_data and all(
+            key in proxy_data for key in ["latency", "speed", "type", "country"]
+        ):
+            results.put(
+                (
+                    True,
+                    proxy,
+                    proxy_data["latency"],
+                    proxy_data["speed"],
+                    proxy_data["type"],
+                    proxy_data["country"],
+                )
+            )
+            status = colored("WORKING (CACHED)", "GREEN")
+            details = (
+                f"Latency: {colored(f'{proxy_data["latency"]:.4f}s', 'CYAN')}, "
+                f"Speed: {colored(f'{proxy_data["speed"]:.2f} B/s', 'MAGENTA')}, "
+                f"Type: {colored(proxy_data['type'], 'YELLOW')}, "
+                f"Country: {colored(proxy_data['country'], 'BLUE')}"
+            )
+            print(f"{colored(proxy, 'BOLD')} - {status} | {details}")
+            return
 
         # Test proxy with a HEAD request to reduce bandwidth
         response = requests.head(
@@ -118,78 +142,108 @@ def load_proxies_from_csv(filename):
                 port_idx = header.index("port")
                 for row in reader:
                     if len(row) > max(ip_idx, port_idx):
-                        proxies.append(f"{row[ip_idx]}:{row[port_idx]}")
+                        # Handle both ip:port and ip,port formats
+                        if ":" in row[ip_idx]:  # ip:port format
+                            proxy = row[ip_idx]
+                        else:  # ip,port format
+                            proxy = f"{row[ip_idx]}:{row[port_idx]}"
+
+                        # Check for additional data
+                        proxy_data = {}
+                        if "latency" in header:
+                            latency_idx = header.index("latency")
+                            proxy_data["latency"] = float(row[latency_idx])
+                        if "speed" in header:
+                            speed_idx = header.index("speed")
+                            proxy_data["speed"] = float(row[speed_idx])
+                        if "type" in header:
+                            type_idx = header.index("type")
+                            proxy_data["type"] = row[type_idx]
+                        if "country" in header:
+                            country_idx = header.index("country")
+                            proxy_data["country"] = row[country_idx]
+
+                        proxies.append((proxy, proxy_data))
             else:
                 f.seek(0)
                 for row in reader:
                     if len(row) > 1:
-                        proxies.append(f"{row[0]}:{row[1]}")
+                        # Handle both ip:port and ip,port formats
+                        if ":" in row[0]:  # ip:port format
+                            proxy = row[0]
+                        else:  # ip,port format
+                            proxy = f"{row[0]}:{row[1]}"
+                        proxies.append((proxy, {}))
                     elif row:  # Handle single-column format
-                        proxies.extend(row)
+                        proxies.extend((p, {}) for p in row if ":" in p)
 
     except Exception as e:
         print(colored(f"Error loading CSV: {str(e)}", "RED"))
-    return [p for p in proxies if validate_proxy_format(p)]
-
-
-def load_proxies_from_folder(folder_path):
-    """Load proxies from all supported files in a directory."""
-    proxies = []
-    supported_extensions = ('.csv', '.json', '.txt')
-    
-    for root, _, files in os.walk(folder_path):
-        for file in files:
-            if file.lower().endswith(supported_extensions):
-                file_path = os.path.join(root, file)
-                if file.lower().endswith('.csv'):
-                    proxies.extend(load_proxies_from_csv(file_path))
-                elif file.lower().endswith('.json'):
-                    proxies.extend(load_proxies_from_json(file_path))
-                elif file.lower().endswith('.txt'):
-                    proxies.extend(load_proxies_from_txt(file_path))
-    
-    # Remove duplicates while preserving order
-    seen = set()
-    return [p for p in proxies if not (p in seen or seen.add(p))]
+    return [(p, data) for p, data in proxies if validate_proxy_format(p)]
 
 
 def load_proxies_from_json(filename):
     """Load proxies from JSON file."""
     proxies = []
     try:
-        with open(filename, 'r') as f:
+        with open(filename, "r") as f:
             data = json.load(f)
             if isinstance(data, dict):
-                if 'proxies' in data:
-                    proxies = data['proxies']
-                elif 'hosts' in data:
-                    proxies = [f"{h['ip']}:{h['port']}" for h in data['hosts']]
+                if "proxies" in data:
+                    proxies = data["proxies"]
+                elif "hosts" in data:
+                    proxies = [f"{h['ip']}:{h['port']}" for h in data["hosts"]]
             elif isinstance(data, list):
                 proxies = data
+
+        formatted_proxies = []
+        for proxy in proxies:
+            if isinstance(proxy, str):
+                if "," in proxy:  # ip,port format
+                    ip, port = proxy.split(",")
+                    formatted_proxies.append((f"{ip}:{port}", {}))
+                else:  # ip:port format
+                    formatted_proxies.append((proxy, {}))
+            elif isinstance(proxy, dict):  # Handle {"ip": "x.x.x.x", "port": "xxxx"}
+                proxy_data = {
+                    "latency": proxy.get("latency", 0),
+                    "speed": proxy.get("speed", 0),
+                    "type": proxy.get("type", "Unknown"),
+                    "country": proxy.get("country", "Unknown"),
+                }
+                formatted_proxies.append((f"{proxy['ip']}:{proxy['port']}", proxy_data))
+
+        proxies = formatted_proxies
+
     except Exception as e:
         print(colored(f"Error loading JSON: {str(e)}", "RED"))
-    return [p for p in proxies if validate_proxy_format(p)]
+    return [(p, data) for p, data in proxies if validate_proxy_format(p)]
 
 
 def load_proxies_from_txt(filename):
     """Load proxies from TXT file."""
     proxies = []
     try:
-        with open(filename, 'r') as f:
+        with open(filename, "r") as f:
             for line in f:
                 line = line.strip()
-                if line and ':' in line:
-                    proxies.append(line)
+                if line:
+                    # Handle both ip:port and ip,port formats
+                    if "," in line:  # ip,port format
+                        ip, port = line.split(",")
+                        proxies.append((f"{ip}:{port}", {}))
+                    else:  # ip:port format
+                        proxies.append((line, {}))
     except Exception as e:
         print(colored(f"Error loading TXT: {str(e)}", "RED"))
-    return [p for p in proxies if validate_proxy_format(p)]
+    return [(p, data) for p, data in proxies if validate_proxy_format(p)]
 
 
 def validate_proxy_format(proxy):
     """Validate basic proxy format."""
-    if ':' not in proxy:
+    if ":" not in proxy:
         return False
-    ip, port = proxy.split(':', 1)
+    ip, port = proxy.split(":", 1)
     try:
         int(port)
         return True
@@ -203,10 +257,12 @@ def check_proxies_threaded(proxies, max_threads=20):
     threads = []
 
     # Create thread pool
-    for proxy in proxies:
+    for proxy, proxy_data in proxies:
         while threading.active_count() > max_threads:
             time.sleep(0.1)
-        thread = threading.Thread(target=check_proxy, args=(proxy, results))
+        thread = threading.Thread(
+            target=check_proxy, args=(proxy, results, 5, proxy_data)
+        )
         thread.start()
         threads.append(thread)
 
@@ -216,7 +272,9 @@ def check_proxies_threaded(proxies, max_threads=20):
     return [results.get() for _ in range(results.qsize())]
 
 
-def sort_and_save_proxies(checked_proxies, output_folder, sort_by=None, create_clean=False):
+def sort_and_save_proxies(
+    checked_proxies, output_folder, sort_by=None, create_clean=False
+):
     """Save results with enhanced organization, metadata, and working report."""
     working = [p for p in checked_proxies if p[0]]
     failed = [p for p in checked_proxies if not p[0]]
@@ -238,24 +296,28 @@ def sort_and_save_proxies(checked_proxies, output_folder, sort_by=None, create_c
 
     # Save detailed working report in CSV
     csv_report_path = os.path.join(output_path, "working_report.csv")
-    with open(csv_report_path, 'w', newline='') as csvfile:
+    with open(csv_report_path, "w", newline="") as csvfile:
         writer = csv.writer(csvfile)
-        writer.writerow(["Proxy", "Type", "Country", "Latency (s)", "Speed (B/s)", "Status"])
+        writer.writerow(
+            ["Proxy", "Type", "Country", "Latency (s)", "Speed (B/s)", "Status"]
+        )
         for proxy in working:
-            writer.writerow([
-                proxy[1],         # Proxy address
-                proxy[4],         # Type
-                proxy[5],         # Country
-                f"{proxy[2]:.4f}", # Latency
-                f"{proxy[3]:.2f}", # Speed
-                "WORKING"
-            ])
+            writer.writerow(
+                [
+                    proxy[1],  # Proxy address
+                    proxy[4],  # Type
+                    proxy[5],  # Country
+                    f"{proxy[2]:.4f}",  # Latency
+                    f"{proxy[3]:.2f}",  # Speed
+                    "WORKING",
+                ]
+            )
         for proxy in failed:
             writer.writerow([proxy[1], "N/A", "N/A", "N/A", "N/A", "FAILED"])
 
     # Save summary statistics
     summary_path = os.path.join(output_path, "summary.txt")
-    with open(summary_path, 'w') as f:
+    with open(summary_path, "w") as f:
         f.write(f"=== Proxy Check Summary ===\n")
         f.write(f"Timestamp: {timestamp}\n")
         f.write(f"Total Tested: {total_tested}\n")
@@ -269,15 +331,15 @@ def sort_and_save_proxies(checked_proxies, output_folder, sort_by=None, create_c
     sorting_methods = {
         None: ("working_proxies.txt", lambda x: x[1]),
         "latency": ("latency_sorted.txt", lambda x: x[2]),
-        "speed": ("speed_sorted.txt", lambda x: -x[3])
+        "speed": ("speed_sorted.txt", lambda x: -x[3]),
     }
 
     for sort_type, (filename, key) in sorting_methods.items():
         if sort_by != sort_type and sort_type is not None:
             continue
-        
+
         sorted_proxies = sorted(working, key=key)
-        with open(os.path.join(output_path, filename), 'w') as f:
+        with open(os.path.join(output_path, filename), "w") as f:
             for proxy in sorted_proxies:
                 f.write(f"{proxy[1]}\n")
 
@@ -285,9 +347,20 @@ def sort_and_save_proxies(checked_proxies, output_folder, sort_by=None, create_c
     print(colored(f"Detailed report: {csv_report_path}", "CYAN"))
     print(colored(f"Summary stats: {summary_path}", "CYAN"))
 
+def load_proxies_from_folder(folder_path):
+    """Load proxies from multiple files within a folder."""
+    proxies = []
+    for filename in os.listdir(folder_path):
+        file_path = os.path.join(folder_path, filename)
+        if filename.endswith('.csv'):
+            proxies.extend(load_proxies_from_csv(file_path))
+        elif filename.endswith('.json'):
+            proxies.extend(load_proxies_from_json(file_path))
+        elif filename.endswith('.txt'):
+            proxies.extend(load_proxies_from_txt(file_path))
+    return proxies
 
 def main():
-    """Main execution with argument parsing."""
     parser = argparse.ArgumentParser(
         description="Advanced Proxy Checker with Multi-File Support",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter
@@ -312,13 +385,15 @@ def main():
         "--timeout", type=int, default=5,
         help="Timeout for proxy checks in seconds"
     )
+    parser.add_argument(
+        "--help", action="help", help="Show this help message and exit"
+    )
 
     args = parser.parse_args()
 
-    print(colored("\n=== Proxy Checker ===", "BOLD"))
-    print(colored(f"Loading proxies from {args.input}...", "CYAN"))
+    print("\n=== Proxy Checker ===")
+    print(f"Loading proxies from {args.input}...")
 
-    # Load proxies based on input type
     if os.path.isfile(args.input):
         if args.input.endswith('.csv'):
             proxies = load_proxies_from_csv(args.input)
@@ -327,28 +402,28 @@ def main():
         elif args.input.endswith('.txt'):
             proxies = load_proxies_from_txt(args.input)
         else:
-            print(colored("Unsupported file format!", "RED"))
+            print("Unsupported file format!")
             return
     elif os.path.isdir(args.input):
         proxies = load_proxies_from_folder(args.input)
     else:
-        print(colored("Invalid input path!", "RED"))
+        print("Invalid input path!")
         return
 
     if not proxies:
-        print(colored("No valid proxies found!", "RED"))
+        print("No valid proxies found!")
         return
 
-    print(colored(f"Loaded {len(proxies)} proxies", "GREEN"))
-    print(colored(f"Starting checks with {args.threads} threads...\n", "CYAN"))
+    print(f"Loaded {len(proxies)} proxies")
+    print(f"Starting checks with {args.threads} threads...\n")
 
     start_time = time.time()
     checked_proxies = check_proxies_threaded(proxies, args.threads)
     duration = time.time() - start_time
 
-    print(colored(f"\nCompleted checks in {duration:.2f} seconds", "GREEN"))
+    print(f"\nCompleted checks in {duration:.2f} seconds")
     sort_and_save_proxies(checked_proxies, args.output, args.sort, True)
-
 
 if __name__ == "__main__":
     main()
+
