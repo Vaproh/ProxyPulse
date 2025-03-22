@@ -204,7 +204,8 @@ def load_proxies_from_json(filename):
                     formatted_proxies.append((f"{ip}:{port}", {}))
                 else:  # ip:port format
                     formatted_proxies.append((proxy, {}))
-            elif isinstance(proxy, dict):  # Handle {"ip": "x.x.x.x", "port": "xxxx"}
+            # Handle {"ip": "x.x.x.x", "port": "xxxx"}
+            elif isinstance(proxy, dict):
                 proxy_data = {
                     "latency": proxy.get("latency", 0),
                     "speed": proxy.get("speed", 0),
